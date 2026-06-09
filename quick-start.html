@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Rescue - 5分钟快速上手教程</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.8;
+            color: #2c3e50;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .content {
+            padding: 3rem 2rem;
+        }
+        .step {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+        }
+        .step-number {
+            display: inline-flex;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: bold;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        .step h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+        code {
+            background: #2d3748;
+            color: #68d391;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        .tip {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+        .keyboard {
+            display: inline-block;
+            background: #e9ecef;
+            border: 2px solid #adb5bd;
+            border-radius: 5px;
+            padding: 0.2rem 0.6rem;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        footer {
+            background: #2d3748;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚑 Claude Rescue</h1>
+            <p>5分钟快速上手 - 监控并救援卡住的 Claude Code 会话</p>
+        </header>
+
+        <div class="content">
+            <!-- 步骤 1 -->
+            <div class="step">
+                <div class="step-number">1</div>
+                <h2>检查环境</h2>
+                <p>确保你已经安装了 Node.js 16 或更高版本：</p>
+                <pre>node --version</pre>
+                <p>如果看到类似 <code>v18.0.0</code> 的输出，说明环境 OK！</p>
+                <div class="tip">
+                    💡 <strong>提示：</strong>如果没有 Node.js，访问 <a href="https://nodejs.org" target="_blank">nodejs.org</a> 下载安装。
+                </div>
+            </div>
+
+            <!-- 步骤 2 -->
+            <div class="step">
+                <div class="step-number">2</div>
+                <h2>获取工具</h2>
+                <p>克隆或下载本项目：</p>
+                <pre>git clone https://github.com/你的用户名/claude-rescue.git
+cd claude-rescue</pre>
+                <p>或者直接下载 ZIP 文件并解压。</p>
+            </div>
+
+            <!-- 步骤 3 -->
+            <div class="step">
+                <div class="step-number">3</div>
+                <h2>启动工具</h2>
+                <p>在项目目录下运行：</p>
+                <pre>node sessions.js</pre>
+                <p>你会看到一个漂亮的实时监控界面：</p>
+                <pre style="color: #68d391;">
+┌─────────────────────────────────────────────────┐
+│ 🚀 Claude 会话监控    共 3 个 · 3 运行 · 1 异常 │
+├─────────────────────────────────────────────────┤
+│     名字      ID      状态   活动    目录        │
+│ ▶ ● 项目A    52348f  错误   2分钟前  ~/project  │
+│   ● 项目B    d8480e  空闲   7分钟前  ~/code     │
+└─────────────────────────────────────────────────┘</pre>
+                <div class="tip">
+                    💡 <strong>建议：</strong>在独立终端窗口运行，不要在 Claude 会话内运行。
+                </div>
+            </div>
+
+            <!-- 步骤 4 -->
+            <div class="step">
+                <div class="step-number">4</div>
+                <h2>基本操作</h2>
+                <p>使用键盘快捷键控制界面：</p>
+                <ul>
+                    <li><span class="keyboard">↑</span> <span class="keyboard">↓</span> 或 <span class="keyboard">j</span> <span class="keyboard">k</span> - 上下移动</li>
+                    <li><span class="keyboard">Enter</span> - 查看会话详情</li>
+                    <li><span class="keyboard">o</span> - 接管卡住的会话（重要！）</li>
+                    <li><span class="keyboard">g</span> - 手动刷新一次</li>
+                    <li><span class="keyboard">a</span> - 开关自动刷新（默认每2秒）</li>
+                    <li><span class="keyboard">/</span> - 按名字/ID/目录过滤</li>
+                    <li><span class="keyboard">s</span> - 切换排序方式</li>
+                    <li><span class="keyboard">q</span> - 退出</li>
+                </ul>
+            </div>
+
+            <!-- 步骤 5 -->
+            <div class="step">
+                <div class="step-number">5</div>
+                <h2>救援卡住的会话</h2>
+                <p>当你发现某个会话卡住了（显示为红色或黄色），按 <span class="keyboard">o</span> 键进入接管向导：</p>
+                <ol>
+                    <li><strong>确认接管</strong>：按 <span class="keyboard">y</span> 继续</li>
+                    <li><strong>是否跳过权限？</strong>：通常按 <span class="keyboard">n</span>（默认否）</li>
+                    <li><strong>是否命名新会话？</strong>：按 <span class="keyboard">n</span> 跳过，或按 <span class="keyboard">y</span> 后输入名字</li>
+                </ol>
+                <p>工具会自动打开新终端，在相同目录启动一个全新的 Claude 会话来处理卡住的任务！</p>
+            </div>
+
+            <!-- 状态说明 -->
+            <div class="step">
+                <div class="step-number">📊</div>
+                <h2>状态指示说明</h2>
+                <ul>
+                    <li><span style="color: #28a745;">● 绿色</span> - 正常运行</li>
+                    <li><span style="color: #ffc107;">● 黄色</span> - 重试中或无响应（超过5分钟无更新）</li>
+                    <li><span style="color: #dc3545;">● 红色</span> - 遇到错误（如 API 524 超时）</li>
+                    <li><span style="color: #6c757d;">○ 灰色</span> - 进程已退出</li>
+                </ul>
+                <div class="tip">
+                    💡 <strong>提示：</strong>黄色和红色状态说明会话可能卡住了，是时候用 <span class="keyboard">o</span> 键接管救援！
+                </div>
+            </div>
+
+            <!-- 高级用法 -->
+            <div class="step">
+                <div class="step-number">⚙️</div>
+                <h2>高级用法</h2>
+                <h3>脚本化输出</h3>
+                <pre># 纯文本表格
+node sessions.js --list
+
+# JSON 格式（供脚本使用）
+node sessions.js --json
+
+# 提取所有活跃会话的 ID
+node sessions.js --json | jq -r '.[] | select(.alive) | .sessionId'</pre>
+
+                <h3>全局安装</h3>
+                <pre>npm install -g .
+claude-rescue  # 之后可以在任何地方运行</pre>
+
+                <h3>自定义会话目录</h3>
+                <pre>node sessions.js --dir ~/my-custom-path/sessions</pre>
+            </div>
+
+            <!-- 常见问题 -->
+            <div class="step">
+                <div class="step-number">❓</div>
+                <h2>常见问题</h2>
+                <h3>Q: 为什么看不到我的会话？</h3>
+                <p>A: 确保你的 Claude Code 正在运行。会话目录只包含<strong>当前运行</strong>的会话，退出后文件会被自动删除。</p>
+
+                <h3>Q: 可以重命名会话吗？</h3>
+                <p>A: 不能在这个工具里重命名。请在 Claude Code 内使用 <code>/rename &lt;新名字&gt;</code> 命令。</p>
+
+                <h3>Q: 接管会话会杀掉原来的进程吗？</h3>
+                <p>A: 不会！接管是启动一个<strong>全新的</strong> Claude 会话，原会话继续运行。新会话会读取卡住会话的进度并继续工作。</p>
+
+                <h3>Q: 我的终端不支持颜色怎么办？</h3>
+                <p>A: 使用 <code>--no-color</code> 参数：<code>node sessions.js --no-color</code></p>
+            </div>
+        </div>
+
+        <footer>
+            <p>🚀 现在你已经掌握了 Claude Rescue 的所有基础操作！</p>
+            <p style="margin-top: 1rem;">查看 <a href="README.zh-CN.md">完整文档</a> 了解更多高级功能</p>
+            <p style="margin-top: 0.5rem; opacity: 0.8;">Made with ❤️ for Claude Code users</p>
+        </footer>
+    </div>
+</body>
+</html>

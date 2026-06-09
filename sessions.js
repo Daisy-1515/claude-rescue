@@ -419,6 +419,11 @@ function makeColors(on) {
     dim: w(2, 22), bold: w(1, 22), under: w(4, 24), inv: w(7, 27),
     red: w(31, 39), green: w(32, 39), yellow: w(33, 39),
     blue: w(34, 39), magenta: w(35, 39), cyan: w(36, 39), gray: w(90, 39),
+    // 明亮色（用于更醒目的状态显示）
+    brightGreen: w(92, 39), brightYellow: w(93, 39), brightRed: w(91, 39),
+    brightCyan: w(96, 39), brightBlue: w(94, 39),
+    // 背景色
+    bgRed: w(41, 49), bgGreen: w(42, 49), bgYellow: w(43, 49),
   };
 }
 
@@ -470,21 +475,24 @@ function printPlain(sessions, opts) {
   const wStat = Math.max(strW('状态'), ...sessions.map((s) => strW(s.abnormal ? abnormalLabel(s.abnormalKind) : (s.status ? statusLabel(s.status) : '—'))));
   const wTime = Math.max(strW('最后活动'), ...sessions.map((s) => strW(relTime(s.updatedAt))));
 
+  out(C.bold(C.cyan('━'.repeat(wName + wId + wStat + wTime + 12))) + '\n');
   out(C.bold('  ' + padEnd('名字', wName) + '  ' + padEnd('会话ID', wId) +
     '  ' + padEnd('状态', wStat) + '  ' + padEnd('最后活动', wTime) + '  目录') + '\n');
+  out(C.cyan('━'.repeat(wName + wId + wStat + wTime + 12)) + '\n');
 
   for (const s of sessions) {
-    const dot = cell(s.alive ? '●' : '○', 1, s.abnormal ? (s.abnormalKind === 'error' ? C.red : C.yellow) : (s.alive ? C.green : C.gray));
-    const name = s.name ? cell(s.name, wName) : cell('—', wName, C.dim);
-    const id = s.sessionId ? cell(s.sessionId, wId, C.cyan) : cell('—', wId, C.dim);
+    const dot = cell(s.alive ? '●' : '○', 1, s.abnormal ? (s.abnormalKind === 'error' ? C.brightRed : C.brightYellow) : (s.alive ? C.brightGreen : C.gray));
+    const name = s.name ? cell(s.name, wName, C.bold) : cell('—', wName, C.dim);
+    const id = s.sessionId ? cell(s.sessionId, wId, C.brightCyan) : cell('—', wId, C.dim);
     const stat = s.abnormal
-      ? cell(abnormalLabel(s.abnormalKind), wStat, s.abnormalKind === 'error' ? C.red : C.yellow)
-      : s.status ? cell(statusLabel(s.status), wStat, s.status === 'busy' ? C.yellow : null)
+      ? cell(abnormalLabel(s.abnormalKind), wStat, s.abnormalKind === 'error' ? C.brightRed : C.brightYellow)
+      : s.status ? cell(statusLabel(s.status), wStat, s.status === 'busy' ? C.brightYellow : C.brightGreen)
         : cell('—', wStat, C.dim);
     const time = cell(relTime(s.updatedAt), wTime, C.dim);
-    const cwd = s.cwd || C.dim('—');
+    const cwd = s.cwd ? C.blue(s.cwd) : C.dim('—');
     out(dot + ' ' + name + '  ' + id + '  ' + stat + '  ' + time + '  ' + cwd + '\n');
   }
+  out(C.cyan('━'.repeat(wName + wId + wStat + wTime + 12)) + '\n');
 }
 
 /* ================================================================== *
@@ -757,17 +765,25 @@ class App {
     const C = this.C;
     const lines = [];
 
+    // 顶部标题栏 - 使用更好看的图标和配色
     const aliveCount = this.all.filter((s) => s.alive).length;
     const abnCount = this.all.filter((s) => s.abnormal).length;
-    const left = ' Claude 会话';
-    const right = `共 ${this.view.length} 个 · ${aliveCount} 运行` + (abnCount ? ` · ${abnCount} 异常` : '') + ' ';
+    const left = ' 🚀 Claude 会话监控';
+    const right = `共 ${this.view.length} 个 · ${aliveCount} 运行` + (abnCount ? ` · ${C.brightRed(abnCount + ' 异常')}` : '') + ' ';
     let bar = left + ' '.repeat(Math.max(1, cols - strW(left) - strW(right))) + right;
-    lines.push(C.inv(padEnd(truncEnd(bar, cols), cols)));
+    lines.push(C.inv(C.bold(padEnd(truncEnd(bar, cols), cols))));
 
-    const auto = this.autoRefresh ? `自动刷新 ${this.refreshMs / 1000} 秒` : '自动刷新已关';
-    let sub = ' ' + this.dir + '   排序: ' + sortLabel(this.sortMode) + '   ' + auto +
-      (this.search ? `   过滤: "${this.search}"` : '');
-    lines.push(C.dim(truncEnd(sub, cols)));
+    // 顶部分隔线
+    lines.push(C.dim('─'.repeat(cols)));
+
+    // 信息栏 - 使用分隔符增强可读性
+    const auto = this.autoRefresh ? `自动刷新: ${C.brightGreen(this.refreshMs / 1000 + '秒')}` : C.dim('自动刷新已关');
+    let sub = ' ' + C.cyan(this.dir) + '  │  排序: ' + C.yellow(sortLabel(this.sortMode)) + '  │  ' + auto +
+      (this.search ? `  │  过滤: ${C.brightYellow('"' + this.search + '"')}` : '');
+    lines.push(truncEnd(sub, cols));
+
+    // 内容分隔线
+    lines.push(C.dim('─'.repeat(cols)));
 
     if (this.mode === 'detail') this.renderDetail(lines, cols, rows);
     else this.renderList(lines, cols, rows);
@@ -778,14 +794,15 @@ class App {
 
   renderList(lines, cols, rows) {
     const C = this.C;
-    const listHeight = Math.max(1, rows - CHROME_LINES);
+    const listHeight = Math.max(1, rows - CHROME_LINES - 2); // 减去额外的分隔线
 
-    lines.push(C.dim('    ' + padEnd('名字', 16) + ' ' + padEnd('ID', 8) + ' ' +
+    // 表头 - 更清晰的格式
+    lines.push(C.bold('    ' + padEnd('名字', 16) + ' ' + padEnd('ID', 8) + ' ' +
       padEnd('状态', 6) + ' ' + padEnd('活动', 10) + ' 目录'));
 
     if (this.view.length === 0) {
-      const msg = this.missing ? '会话目录不存在: ' + this.dir
-        : this.search ? '没有匹配过滤条件的会话。' : '当前没有正在运行的会话。';
+      const msg = this.missing ? '❌ 会话目录不存在: ' + this.dir
+        : this.search ? '🔍 没有匹配过滤条件的会话' : '💤 当前没有正在运行的会话';
       for (let i = 0; i < listHeight; i++) lines.push(i === 0 ? '  ' + C.dim(msg) : '');
     } else {
       if (this.selected < this.offset) this.offset = this.selected;
@@ -798,6 +815,8 @@ class App {
       }
     }
 
+    // 底部分隔线
+    lines.push(C.dim('─'.repeat(cols)));
     lines.push(this.renderHint(cols));
     lines.push(this.renderMsg(cols));
   }
@@ -806,21 +825,31 @@ class App {
     const C = this.C;
     const PREFIX = 4 + 16 + 1 + 8 + 1 + 6 + 1 + 10 + 1; // 箭头+圆点 + 各列 + 分隔
     const cwdW = Math.max(6, cols - PREFIX);
+
+    // 使用更鲜明的颜色区分状态
+    const dotColor = s.abnormal
+      ? (s.abnormalKind === 'error' ? C.brightRed : C.brightYellow)
+      : (s.alive ? C.brightGreen : C.gray);
+
+    const statusColor = s.abnormal
+      ? (s.abnormalKind === 'error' ? C.brightRed : C.brightYellow)
+      : (s.status === 'busy' ? C.brightYellow : (s.status ? C.brightGreen : C.dim));
+
     const segs = [
-      { t: sel ? '▶ ' : '  ' },
-      { t: (s.alive ? '●' : '○') + ' ', c: s.abnormal ? (s.abnormalKind === 'error' ? C.red : C.yellow) : (s.alive ? C.green : C.gray) },
-      { t: s.name || '—', w: 16, c: s.name ? null : C.dim },
+      { t: sel ? '▶ ' : '  ', c: sel ? C.brightCyan : null },
+      { t: (s.alive ? '●' : '○') + ' ', c: dotColor },
+      { t: s.name || '—', w: 16, c: s.name ? (sel ? C.bold : null) : C.dim },
       { t: ' ' },
-      { t: (s.sessionId || '').slice(0, 8) || '—', w: 8, c: C.cyan },
+      { t: (s.sessionId || '').slice(0, 8) || '—', w: 8, c: C.brightCyan },
       { t: ' ' },
-      { t: s.abnormal ? abnormalLabel(s.abnormalKind) : (s.status ? statusLabel(s.status) : '—'), w: 6, c: s.abnormal ? (s.abnormalKind === 'error' ? C.red : C.yellow) : (s.status === 'busy' ? C.yellow : (s.status ? null : C.dim)) },
+      { t: s.abnormal ? abnormalLabel(s.abnormalKind) : (s.status ? statusLabel(s.status) : '—'), w: 6, c: statusColor },
       { t: ' ' },
       { t: relTime(s.updatedAt), w: 10, c: C.dim },
       { t: ' ' },
-      { t: s.cwd ? truncStart(s.cwd, cwdW) : '—', c: s.cwd ? null : C.dim },
+      { t: s.cwd ? truncStart(s.cwd, cwdW) : '—', c: s.cwd ? C.blue : C.dim },
     ];
     const { raw, colored } = composeRow(segs);
-    if (sel) return C.inv(padEnd(truncEnd(raw, cols), cols));
+    if (sel) return C.inv(C.bold(padEnd(truncEnd(raw, cols), cols)));
     return colored;
   }
 
@@ -830,45 +859,55 @@ class App {
     if (!s) { lines.push(''); lines.push('  ' + C.dim('(未选中会话)')); return; }
 
     const pidVal = s.pid == null ? '—'
-      : s.pid + (s.alive ? C.green('  ● 运行中') : C.gray('  ○ 已退出'));
+      : s.pid + (s.alive ? C.brightGreen('  ● 运行中') : C.gray('  ○ 已退出'));
+
+    // 异常状态用更醒目的显示
+    let abnormalVal = C.brightGreen('✓ 无异常');
+    if (s.abnormal) {
+      const label = abnormalLabel(s.abnormalKind);
+      const detail = s.abnormalReason ? ' · ' + s.abnormalReason : '';
+      abnormalVal = (s.abnormalKind === 'error' ? C.brightRed : C.brightYellow)('⚠ ' + label + detail);
+    }
+
     const fields = [
-      ['名字', s.name || C.dim('(无)')],
-      ['会话 ID', s.sessionId || C.dim('—')],
+      ['名字', s.name ? C.bold(s.name) : C.dim('(无)')],
+      ['会话 ID', s.sessionId ? C.brightCyan(s.sessionId) : C.dim('—')],
       ['PID', pidVal],
-      ['状态', s.status ? statusLabel(s.status) : C.dim('—')],
-      ['异常', s.abnormal ? (s.abnormalKind === 'error' ? C.red : C.yellow)(abnormalLabel(s.abnormalKind) + (s.abnormalReason ? ' · ' + s.abnormalReason : '')) : C.dim('无')],
-      ['目录', s.cwd ? truncStart(s.cwd, Math.max(10, cols - 16)) : C.dim('—')],
-      ['类型', s.kind || C.dim('—')],
-      ['版本', s.version || C.dim('—')],
+      ['状态', s.status ? (s.status === 'busy' ? C.brightYellow(statusLabel(s.status)) : C.brightGreen(statusLabel(s.status))) : C.dim('—')],
+      ['异常', abnormalVal],
+      ['目录', s.cwd ? C.blue(truncStart(s.cwd, Math.max(10, cols - 16))) : C.dim('—')],
+      ['类型', s.kind ? C.cyan(s.kind) : C.dim('—')],
+      ['版本', s.version ? C.cyan(s.version) : C.dim('—')],
       ['启动时间', fmtDate(s.startedAt)],
       ['更新时间', fmtDate(s.updatedAt) + '  ' + C.dim('(' + relTime(s.updatedAt) + ')')],
-      ['文件', truncStart(s.filePath, Math.max(10, cols - 16))],
+      ['文件', C.dim(truncStart(s.filePath, Math.max(10, cols - 16)))],
     ];
 
     lines.push('');
     for (const [k, v] of fields) lines.push('  ' + C.dim(padEnd(k + ':', 12)) + ' ' + v);
-    if (s.parseError) { lines.push(''); lines.push('  ' + C.red('解析错误: ' + s.parseError)); }
+    if (s.parseError) { lines.push(''); lines.push('  ' + C.brightRed('⚠ 解析错误: ' + s.parseError)); }
 
-    const fill = rows - lines.length - 2;
+    const fill = rows - lines.length - 4; // 调整填充以适应新的分隔线
     for (let i = 0; i < Math.max(0, fill); i++) lines.push('');
 
+    lines.push(C.dim('─'.repeat(cols)));
     lines.push(C.dim(truncEnd(' o 接管 · y 复制 ID · g 刷新 · ↑↓ 切换 · esc 返回', cols)));
     lines.push(this.renderMsg(cols));
   }
 
   renderHint(cols) {
     let hint;
-    if (this.mode === 'search') hint = '输入文字过滤 · enter 确定 · esc 清除';
+    if (this.mode === 'search') hint = '🔍 输入文字过滤 · enter 确定 · esc 清除';
     else if (this.mode === 'resume') hint = this.resumeHint();
-    else hint = '↑↓/jk 移动 · enter 详情 · o 接管 · a 自动刷新 · g 刷新 · / 过滤 · s 排序 · q 退出';
+    else hint = '⌨  ↑↓/jk 移动 · enter 详情 · o 接管 · a 自动刷新 · g 刷新 · / 过滤 · s 排序 · q 退出';
     return this.C.dim(truncEnd(' ' + hint, cols));
   }
 
   renderMsg(cols) {
     const C = this.C;
-    if (this.mode === 'search') return C.bold(' 过滤: ') + truncEnd(this.search, Math.max(1, cols - 9)) + '▏';
+    if (this.mode === 'search') return C.bold(' 🔍 过滤: ') + truncEnd(this.search, Math.max(1, cols - 11)) + '▏';
     if (this.mode === 'resume' && this.resume) return this.renderResumeMsg(cols);
-    return this.message ? C.green(truncEnd(' ' + this.message, cols)) : '';
+    return this.message ? C.brightGreen(truncEnd(' ✓ ' + this.message, cols)) : '';
   }
 
   // 接管向导: 底部提示行(随步骤变化)。
@@ -890,13 +929,13 @@ class App {
     const f = this.resume;
     const id = (f.s.sessionId || '').slice(0, 8);
     if (f.step === 'inputName') {
-      return C.bold(' 会话名字(--name): ') + truncEnd(f.name, Math.max(1, cols - 20)) + '▏';
+      return C.bold(' 📝 会话名字(--name): ') + truncEnd(f.name, Math.max(1, cols - 23)) + '▏';
     }
     let q;
-    if (f.step === 'confirm') q = `在 ${f.where} 打开终端,启动 Claude 处理卡住的会话 ${id}?`;
-    else if (f.step === 'skipPerm') q = '是否开启 --dangerously-skip-permissions(跳过权限确认)?';
-    else q = '是否给新会话命名(--name)?';
-    return C.yellow(truncEnd(' ' + q + ' (y/N)', cols));
+    if (f.step === 'confirm') q = `🚀 在 ${f.where} 打开终端,启动 Claude 处理卡住的会话 ${id}?`;
+    else if (f.step === 'skipPerm') q = '⚙  是否开启 --dangerously-skip-permissions(跳过权限确认)?';
+    else q = '✏️  是否给新会话命名(--name)?';
+    return C.brightYellow(truncEnd(' ' + q + ' (y/N)', cols));
   }
 
   /* ---- lifecycle ---- */

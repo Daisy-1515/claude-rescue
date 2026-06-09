@@ -1,5 +1,19 @@
 # claude-rescue
 
+<div align="center">
+
+**A real-time terminal tool to watch, monitor, and rescue stuck Claude Code sessions**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D16-brightgreen)](https://nodejs.org/)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com)
+
+English | [简体中文](./README.zh-CN.md)
+
+</div>
+
+---
+
 A **zero-dependency** terminal tool that **watches** your running **Claude Code** sessions in real time, flags the stuck ones, and **takes them over to rescue them** with one keypress. Behaves identically on **macOS / Windows / Linux**.
 
 Every running Claude Code session writes a small JSON file at `~/.claude/sessions/<pid>.json`. This tool reads that directory and presents an interactive UI (TUI) listing each session's **sessionId, name, directory, status, and last-activity time**, **auto-refreshing every few seconds** so you can see at a glance which sessions are running and which are busy or idle.
